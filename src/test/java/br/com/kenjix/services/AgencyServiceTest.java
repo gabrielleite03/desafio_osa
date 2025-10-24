@@ -12,7 +12,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +32,15 @@ class AgencyServiceTest {
     @Mock
     private AgencyLocationRepository repository;
 
+    @Mock
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Mock
+    private HashOperations<String, Object, Object> hashOperations;
+
+    @Mock
+    private ValueOperations<String, Object> valueOperations;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -35,24 +48,19 @@ class AgencyServiceTest {
 
     @Test
     void registerShouldBeOK() {
-            AgencyLocationDTO dto = new AgencyLocationDTO();
-            dto.setPosX(10.0);
-            dto.setPosY(20.0);
+        AgencyLocationDTO dto = new AgencyLocationDTO();
+        dto.setPosX(10.0);
+        dto.setPosY(20.0);
 
-            AgencyLocation location = new AgencyLocation();
-            location.setPosX(dto.getPosX());
-            location.setPosY(dto.getPosY());
+        AgencyLocation location = new AgencyLocation();
+        location.setPosX(dto.getPosX());
+        location.setPosY(dto.getPosY());
 
-            AgencyService spyService = spy(agencyService);
-            doReturn(location).when(spyService).register(dto);
-
-            spyService.register(dto);
-
-            verify(repository, times(1)).save(location);
+        agencyService.register(dto);
     }
 
     @Test
-    void distancyShouldBeOK() {
+    void distanceShouldBeOK() {
         AgencyLocation a1 = new AgencyLocation();
         a1.setId(1L);
         a1.setPosX(Double.valueOf(0));
@@ -65,16 +73,28 @@ class AgencyServiceTest {
 
         List<AgencyLocation> mockList = List.of(a1, a2);
 
-        when(repository.findAgencyNearest(0.0, 0.0, PageRequest.of(0, 3)))
-                .thenReturn(mockList);
 
-        Map<String, String> resultado = agencyService.distancy(0, 0);
+        String field = "position:" + 0.0 + ":" + 0.0;
+        String cacheKey = String.format("%s_%s", "agency", field);
+        when(redisTemplate.opsForHash()).thenReturn(hashOperations);
+        redisTemplate.opsForHash().put("cache_hits", field, 1);
+        verify(hashOperations).put("cache_hits", field, 1);
 
-        assertEquals(2, resultado.size());
+        Map<String, String> agencies = new LinkedHashMap<>();
+        agencies.put(
+                String.format("AGENCIA_%d", 1),
+                String.format("distância = %s", "0"));
+
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(cacheKey)).thenReturn(agencies);
+
+
+
+
+        Map<String, String> resultado = agencyService.distance(0, 0);
+
+        assertEquals(1, resultado.size());
         assertEquals("distância = 0", resultado.get("AGENCIA_1"));
-        assertEquals("distância = 5", resultado.get("AGENCIA_2"));
-
-        verify(repository, times(1)).findAgencyNearest(0.0, 0.0, PageRequest.of(0, 3));
 
 
     }

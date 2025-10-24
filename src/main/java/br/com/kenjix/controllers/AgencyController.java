@@ -33,7 +33,7 @@ public class AgencyController {
             @RequestParam(value = "posY") double posY
     ){
 
-    return ResponseEntity.ok(agencyService.distancy(posX, posY));
+    return ResponseEntity.ok(agencyService.distance(posX, posY));
     }
 
 

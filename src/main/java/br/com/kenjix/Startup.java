@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SpringBootApplication
-@EnableCaching
 public class Startup {
 
 	public static void main(String[] args) {

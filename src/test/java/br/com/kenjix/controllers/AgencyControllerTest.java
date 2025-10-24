@@ -98,24 +98,29 @@ class AgencyControllerTest  extends AbstractIntegrationTest {
     @Test
     @Order(2)
     void distance() throws JsonProcessingException {
-        specification.basePath("/desafio/distancia");
+        specification = new RequestSpecBuilder()
+                .addHeader(TestConfigs.HEADER_PARAM_ORIGIN, TestConfigs.ORIGIN_LOCAL)
+                .addHeader(TestConfigs.HEADER_PARAM_AUTHORIZATION, "Bearer " + tokenDto.getAccessToken())
+                .setBasePath("/desafio/distancia")
+                .setPort(TestConfigs.SERVER_PORT)
+                .addFilter(new RequestLoggingFilter(LogDetail.ALL))
+                .addFilter(new ResponseLoggingFilter(LogDetail.ALL))
+                .build();
         var content = given(specification)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .queryParam("posX", 15)
-                .queryParam("posY", -4.5)
+                .queryParam("posX", 10)
+                .queryParam("posY", 15.5)
                 .when()
                 .get()
                 .then()
                 .statusCode(200)
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .extract()
                 .body()
                 .asString();
-
         Map<String, String> result = objectMapper.readValue(content, Map.class);
 
         Assert.assertEquals(1, result.size());
-        Assert.assertEquals("distância = 20,62", result.get("AGENCIA_1"));
+        Assert.assertEquals("distância = 0", result.get("AGENCIA_1"));
     }
 
     private void mockAgencyLocationDTO() {

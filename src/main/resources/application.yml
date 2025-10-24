@@ -7,15 +7,17 @@ security:
     token:
       secret-key: 53cr37
       expire-lenght: 3600000
-email:
-  subject: "Default Subject"
-  message: "Default Message"
 spring:
+  redis:
+    host: localhost
+    port: 6379
+  cache:
+    type: redis
   application:
     name: rest-with-spring-boot-and-java-kenjix
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3308/rest_with_spring_boot_kenjix?useTimezone=true&serverTimezone=UTC
+    url: jdbc:mysql://db:3308/rest_with_spring_boot_kenjix?useTimezone=true&serverTimezone=UTC
     username: root
     password: ${JDBC_USER_PASS:admin123}
   jpa:
